@@ -1,0 +1,14 @@
+[package]
+name = "eos-rs"
+version = "0.1.0"
+edition = "2021"
+description = "Provides rust bindings to the EOS sdk"
+keywords = ["eos", "gamedev"]
+documentation = "https://dev.epicgames.com/docs"
+
+[dependencies]
+
+[workspace]
+members = [
+    "./eos-sys",
+]

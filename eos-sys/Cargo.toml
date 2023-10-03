@@ -1,0 +1,14 @@
+[package]
+name = "eos-sys"
+version = "0.1.0"
+edition = "2021"
+build = "build.rs"
+
+[features]
+default = []
+rebuild-bindings = ["bindgen"]
+
+[dependencies]
+
+[build-dependencies]
+bindgen = { version = "0.68", optional = true }

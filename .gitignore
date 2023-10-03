@@ -1,0 +1,6 @@
+/target
+/Cargo.lock
+
+eos-sys/lib/SDK/*
+!eos-sys/lib/SDK/Bin
+!eos-sys/lib/SDK/Lib

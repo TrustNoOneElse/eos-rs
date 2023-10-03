@@ -1,0 +1,1 @@
+First of all thanks to steamworks-rs for the inspiration and the bindgen code!
