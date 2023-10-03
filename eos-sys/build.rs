@@ -70,15 +70,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let binding_path = Path::new(&format!("src/{}_bindings.rs", target_os)).to_owned();
         let bindings = bindgen::Builder::default()
             .header(
-                path
-                    .join("Include/eos_platform_prereqs.h")
+                path.join("Include/eos_platform_prereqs.h")
                     .to_string_lossy(),
             )
-            .header(
-                path
-                    .join("Include/eos_sdk.h")
-                    .to_string_lossy(),
-            )
+            .header(path.join("Include/eos_sdk.h").to_string_lossy())
             .clang_arg("-xc++")
             .clang_arg("-std=c++11")
             .clang_arg(format!("-I{}", path.join("Include").display()))
@@ -93,7 +88,5 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .expect("Couldn't write bindings!");
     }
 
-
     Ok(())
-
 }
