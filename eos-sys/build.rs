@@ -2,7 +2,7 @@ use std::env;
 use std::fs::{self};
 use std::path::{Path, PathBuf};
 
-//#[cfg(feature = "rebuild-bindings")]
+#[cfg(feature = "rebuild-bindings")]
 extern crate bindgen;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -69,7 +69,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("cargo:rustc-link-search={}", out_path.display());
     println!("cargo:rustc-link-lib=dylib={}", lib);
 
-    //#[cfg(feature = "rebuild-bindings")]
+    #[cfg(feature = "rebuild-bindings")]
     {
         let target_os = if target.contains("windows") {
             "windows"
