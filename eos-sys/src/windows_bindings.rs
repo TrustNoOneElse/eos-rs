@@ -46457,3 +46457,56 @@ extern "C" {
     #[doc = " Retrieves the current network state as told to the SDK by the application.\n\n @return The current network status."]
     pub fn EOS_Platform_GetNetworkStatus(Handle: EOS_HPlatform) -> EOS_ENetworkStatus;
 }
+extern "C" {
+    #[doc = " Adds an integrated platform options to the container.\n\n @param Options Object containing properties related to setting a user's Status\n @return Success if modification was added successfully, otherwise an error code related to the problem"]
+    pub fn EOS_IntegratedPlatformOptionsContainer_Add(
+        Handle: EOS_HIntegratedPlatformOptionsContainer,
+        InOptions: *const EOS_IntegratedPlatformOptionsContainer_AddOptions,
+    ) -> EOS_EResult;
+}
+extern "C" {
+    #[doc = " Sets the current login status of a specific local platform user to a new value.\n\n This function may only be used with an Integrated Platform initialized with the EOS_IPMF_ApplicationManagedIdentityLogin flag, otherwise\n calls will return EOS_InvalidState and a platform user's login status will be controlled by OS events.\n\n If the login status of a user changes, a Integrated Platform User Login Status Changed notification will fire, and depending on the state\n of the user's login and the platform, the EOS SDK might start fetching data for the user, it may clear cached data, or it may do nothing.\n\n If the login status of a user is not different from a previous call to this function, the function will do nothing and return EOS_Success.\n This will not trigger a call to the Integrated Platform User Login Status Changed.\n\n @param Options\n @return EOS_Success if the call was successful\n         EOS_NotConfigured if the Integrated Platform was not initialized on platform creation\n         EOS_InvalidState if the Integrated Platform was not initialized with the EOS_IPMF_ApplicationManagedIdentityLogin flag\n         EOS_InvalidUser if the LocalPlatformUserId is not a valid user id for the provided Integrated Platform\n         EOS_InvalidParameters if any other input was invalid"]
+    pub fn EOS_IntegratedPlatform_SetUserLoginStatus(
+        Handle: EOS_HIntegratedPlatform,
+        Options: *const EOS_IntegratedPlatform_SetUserLoginStatusOptions,
+    ) -> EOS_EResult;
+}
+extern "C" {
+    #[doc = " Register to receive notifications when the login state of Integrated Platform users change.\n\n This notification will trigger any time the EOS SDK's internal login state changes for a user, including for manual login state\n changes (when the EOS_IPMF_ApplicationManagedIdentityLogin flag is set), or automatically detected ones (when not disabled by the\n EOS_IPMF_ApplicationManagedIdentityLogin flag).\n\n @param Options Data associated with what version of the notification to receive.\n @param ClientData A context pointer that is returned in the callback function.\n @param CallbackFunction The function that is called when Integrated Platform user logins happen\n @return A valid notification that can be used to unregister for notifications, or EOS_INVALID_NOTIFICATIONID if input was invalid.\n\n @see EOS_IntegratedPlatform_RemoveNotifyUserLoginStatusChanged"]
+    pub fn EOS_IntegratedPlatform_AddNotifyUserLoginStatusChanged(
+        Handle: EOS_HIntegratedPlatform,
+        Options: *const EOS_IntegratedPlatform_AddNotifyUserLoginStatusChangedOptions,
+        ClientData: *mut ::std::os::raw::c_void,
+        CallbackFunction: EOS_IntegratedPlatform_OnUserLoginStatusChangedCallback,
+    ) -> EOS_NotificationId;
+}
+extern "C" {
+    #[doc = " Unregister from Integrated Platform user login and logout notifications.\n\n @param NotificationId The NotificationId that was returned from registering for Integrated Platform user login and logout notifications.\n\n @see EOS_IntegratedPlatform_AddNotifyUserLoginStatusChanged"]
+    pub fn EOS_IntegratedPlatform_RemoveNotifyUserLoginStatusChanged(
+        Handle: EOS_HIntegratedPlatform,
+        NotificationId: EOS_NotificationId,
+    );
+}
+extern "C" {
+    #[doc = " Sets the integrated platform user logout handler for all integrated platforms.\n\n There can only be one handler set at once, attempting to set a handler when one is already set will result in a EOS_AlreadyConfigured error.\n\n This callback handler allows applications to decide if a user is logged-out immediately when the SDK receives a system user logout event,\n or if the application would like to give the user a chance to correct themselves and log back in if they are in a state that might be\n disruptive if an accidental logout happens (unsaved user data, in a multiplayer match, etc). This is not supported on all integrated\n platforms, such as those where applications automatically close when a user logs out, or those where a user is always logged-in.\n\n If a logout is deferred, applications are expected to eventually call EOS_IntegratedPlatform_FinalizeDeferredUserLogout when they\n have decided a user meant to logout, or if they have logged in again.\n\n @param Options Data that specifies the API version.\n @param ClientData An optional context pointer that is returned in the callback data.\n @param CallbackFunction The function that will handle the callback.\n @return EOS_Success if the platform user logout handler was bound successfully.\n\t\t   EOS_AlreadyConfigured if there is already a platform user logout handler bound.\n\n @see EOS_IntegratedPlatform_ClearUserPreLogoutCallback\n @see EOS_IntegratedPlatform_FinalizeDeferredUserLogout"]
+    pub fn EOS_IntegratedPlatform_SetUserPreLogoutCallback(
+        Handle: EOS_HIntegratedPlatform,
+        Options: *const EOS_IntegratedPlatform_SetUserPreLogoutCallbackOptions,
+        ClientData: *mut ::std::os::raw::c_void,
+        CallbackFunction: EOS_IntegratedPlatform_OnUserPreLogoutCallback,
+    ) -> EOS_EResult;
+}
+extern "C" {
+    #[doc = " Clears a previously set integrated platform user logout handler for the specified integrated platform. If none is set for the specified platform, this does nothing.\n\n If there are any pending deferred user-logouts when a handler is cleared, those users will internally be logged-out and cached data about those users cleared before this function returns.\n Any applicable callbacks about those users being logged-out will occur in a future call to EOS_Platform_Tick().\n\n @param Options Data for which integrated platform to no longer call a previously-registered callback for.\n\n @see EOS_IntegratedPlatform_SetUserPreLogoutCallback"]
+    pub fn EOS_IntegratedPlatform_ClearUserPreLogoutCallback(
+        Handle: EOS_HIntegratedPlatform,
+        Options: *const EOS_IntegratedPlatform_ClearUserPreLogoutCallbackOptions,
+    );
+}
+extern "C" {
+    #[doc = " Complete a Logout/Login for a previously deferred Integrated Platform User Logout.\n\n This function allows applications to control whether an integrated-platform user actually logs out when an integrated platform's system tells the SDK a user has been logged-out.\n This allows applications to prevent accidental logouts from destroying application user state. If a user did not mean to logout, the application should prompt and confirm whether\n the user meant to logout, and either wait for them to confirm they meant to, or wait for them to login again, before calling this function.\n\n If the sign-out is intended and your application believes the user is still logged-out, the UserExpectedLoginState in Options should be EOS_LS_NotLoggedIn.\n If the sign-out was NOT intended and your application believes the user has logged-in again, the UserExpectedLoginState in Options should be EOS_LS_LoggedIn.\n\n @param Options Data for which integrated platform and user is now in the expected logged-in/logged-out state.\n @return EOS_Success if the platform user state matches the UserExpectedLoginState internally.\n         EOS_NotConfigured if the Integrated Platform was not initialized on platform creation\n         EOS_InvalidUser if the LocalPlatformUserId is not a valid user id for the provided Integrated Platform, or if there is no deferred logout waiting to be completed for this specified user\n         EOS_InvalidParameters if any other input was invalid\n\n @see EOS_IntegratedPlatform_SetUserPreLogoutCallback\n @see EOS_IntegratedPlatform_ClearUserPreLogoutCallback\n @see EOS_IntegratedPlatform_AddNotifyUserLoginStatusChanged"]
+    pub fn EOS_IntegratedPlatform_FinalizeDeferredUserLogout(
+        Handle: EOS_HIntegratedPlatform,
+        Options: *const EOS_IntegratedPlatform_FinalizeDeferredUserLogoutOptions,
+    ) -> EOS_EResult;
+}

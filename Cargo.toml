@@ -7,8 +7,16 @@ keywords = ["eos", "gamedev"]
 documentation = "https://dev.epicgames.com/docs"
 
 [dependencies]
+eos-sys = {path = "./eos-sys", version = "0.1.0"}
+bitflags = "2.4.0"
+serde = { version = "1.0", features = ["derive"], optional = true }
 
 [workspace]
 members = [
     "./eos-sys",
 ]
+
+[features]
+default = ["integrated_platform"]
+serde = ["dep:serde"]
+integrated_platform = []
