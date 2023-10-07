@@ -1,21 +1,19 @@
 use bitflags::bitflags;
 use eos_sys::{
-    EOS_ERTCBackgroundMode,
-    EOS_HIntegratedPlatformOptionsContainer, EOS_HPlatform, EOS_Initialize, EOS_InitializeOptions,
-    EOS_IntegratedPlatformOptionsContainer_Release,
+    EOS_ERTCBackgroundMode, EOS_HIntegratedPlatformOptionsContainer, EOS_HPlatform, EOS_Initialize,
+    EOS_InitializeOptions, EOS_IntegratedPlatformOptionsContainer_Release,
     EOS_IntegratedPlatform_CreateIntegratedPlatformOptionsContainer,
     EOS_IntegratedPlatform_CreateIntegratedPlatformOptionsContainerOptions,
     EOS_Platform_ClientCredentials, EOS_Platform_Create, EOS_Platform_Options,
-    EOS_Platform_RTCOptions,
-    EOS_INITIALIZE_API_LATEST,
+    EOS_Platform_RTCOptions, EOS_Platform_Release, EOS_INITIALIZE_API_LATEST,
     EOS_INTEGRATEDPLATFORM_CREATEINTEGRATEDPLATFORMOPTIONSCONTAINER_API_LATEST,
     EOS_PF_CONSOLE_ENABLE_OVERLAY_AUTOMATIC_UNLOADING, EOS_PF_DISABLE_OVERLAY,
     EOS_PF_DISABLE_SOCIAL_OVERLAY, EOS_PF_LOADING_IN_EDITOR, EOS_PF_RESERVED1,
     EOS_PF_WINDOWS_ENABLE_OVERLAY_D3D10, EOS_PF_WINDOWS_ENABLE_OVERLAY_D3D9,
-    EOS_PF_WINDOWS_ENABLE_OVERLAY_OPENGL, EOS_PLATFORM_RTCOPTIONS_API_LATEST, EOS_Platform_Release,
+    EOS_PF_WINDOWS_ENABLE_OVERLAY_OPENGL, EOS_PLATFORM_RTCOPTIONS_API_LATEST,
 };
 use error::EosError;
-use std::{path::PathBuf, sync::Arc, marker::PhantomData, rc::Rc};
+use std::{marker::PhantomData, path::PathBuf, rc::Rc, sync::Arc};
 
 mod error;
 #[cfg(feature = "integrated_platform")]
@@ -29,7 +27,7 @@ static LATEST_API_VERSION: i32 = EOS_INITIALIZE_API_LATEST as i32;
 // see https://dev.epicgames.com/docs/epic-online-services/platforms/guidelines-and-references
 pub struct EosPlatform {
     inner: Rc<Inner>,
-    _not_sync: PhantomData<*mut ()>
+    _not_sync: PhantomData<*mut ()>,
 }
 
 struct Inner {
@@ -75,8 +73,7 @@ impl EosPlatform {
         Ok(Self {
             inner: Rc::new(Inner {
                 handle: platform_handle,
-                
-            }), 
+            }),
             _not_sync: PhantomData,
         })
     }
@@ -206,7 +203,9 @@ impl From<EosPlatformOptions> for EOS_Platform_Options {
                 None => std::ptr::null(),
             },
             CacheDirectory: match val.cache_directory {
-                Some(cache_directory) => cache_directory.as_path().to_str().unwrap().as_ptr() as *const i8,
+                Some(cache_directory) => {
+                    cache_directory.as_path().to_str().unwrap().as_ptr() as *const i8
+                }
                 None => std::ptr::null(),
             },
             TickBudgetInMilliseconds: val.tick_budget_in_milliseconds,
@@ -222,7 +221,6 @@ impl From<EosPlatformOptions> for EOS_Platform_Options {
             Reserved: std::ptr::null_mut(),
             SystemSpecificOptions: std::ptr::null_mut(),
         }
-        
     }
 }
 
