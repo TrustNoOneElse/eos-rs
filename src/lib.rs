@@ -15,7 +15,7 @@ use eos_sys::{
     EOS_PF_WINDOWS_ENABLE_OVERLAY_OPENGL, EOS_PLATFORM_RTCOPTIONS_API_LATEST, EOS_Platform_Release,
 };
 use error::EosError;
-use std::{path::PathBuf, sync::Arc};
+use std::{path::PathBuf, sync::Arc, marker::PhantomData, rc::Rc};
 
 mod error;
 #[cfg(feature = "integrated_platform")]
@@ -27,9 +27,9 @@ static LATEST_API_VERSION: i32 = EOS_INITIALIZE_API_LATEST as i32;
 
 // EOS is not considered yet thead-safe
 // see https://dev.epicgames.com/docs/epic-online-services/platforms/guidelines-and-references
-#[derive(Clone)]
 pub struct EosPlatform {
-    inner: Arc<Inner>,
+    inner: Rc<Inner>,
+    _not_sync: PhantomData<*mut ()>
 }
 
 struct Inner {
@@ -73,10 +73,21 @@ impl EosPlatform {
         };
 
         Ok(Self {
-            inner: Arc::new(Inner {
+            inner: Rc::new(Inner {
                 handle: platform_handle,
-            }),
+                
+            }), 
+            _not_sync: PhantomData,
         })
+    }
+}
+
+impl Clone for EosPlatform {
+    fn clone(&self) -> Self {
+        Self {
+            inner: self.inner.clone(),
+            _not_sync: PhantomData,
+        }
     }
 }
 
@@ -97,9 +108,9 @@ pub enum EosPlatformRtcBackgroundMode {
     KeepRoomsAlive = 1,
 }
 
-impl Into<EOS_ERTCBackgroundMode> for EosPlatformRtcBackgroundMode {
-    fn into(self) -> EOS_ERTCBackgroundMode {
-        match self {
+impl From<EosPlatformRtcBackgroundMode> for EOS_ERTCBackgroundMode {
+    fn from(val: EosPlatformRtcBackgroundMode) -> Self {
+        match val {
             EosPlatformRtcBackgroundMode::LeaveRooms => {
                 EOS_ERTCBackgroundMode::EOS_RTCBM_LeaveRooms
             }
@@ -115,11 +126,11 @@ pub struct EeoPlatformClientCredentials {
     client_secret: String,
 }
 
-impl Into<EOS_Platform_ClientCredentials> for EeoPlatformClientCredentials {
-    fn into(self) -> EOS_Platform_ClientCredentials {
+impl From<EeoPlatformClientCredentials> for EOS_Platform_ClientCredentials {
+    fn from(val: EeoPlatformClientCredentials) -> Self {
         EOS_Platform_ClientCredentials {
-            ClientId: self.client_id.as_ptr() as *const i8,
-            ClientSecret: self.client_secret.as_ptr() as *const i8,
+            ClientId: val.client_id.as_ptr() as *const i8,
+            ClientSecret: val.client_secret.as_ptr() as *const i8,
         }
     }
 }
@@ -172,34 +183,34 @@ pub struct EosPlatformOptions {
     pub rtc_options: Option<EosPlatformRtcBackgroundMode>,
 }
 
-impl Into<EOS_Platform_Options> for EosPlatformOptions {
-    fn into(self) -> EOS_Platform_Options {
+impl From<EosPlatformOptions> for EOS_Platform_Options {
+    fn from(val: EosPlatformOptions) -> Self {
         EOS_Platform_Options {
             ApiVersion: LATEST_API_VERSION,
-            bIsServer: self.is_server as i32,
-            ProductId: self.product_id.as_ptr() as *const i8,
-            SandboxId: self.sandbox_id.as_ptr() as *const i8,
-            DeploymentId: self.deployment_id.as_ptr() as *const i8,
-            ClientCredentials: self.client_credentials.into(),
-            Flags: self.flags.bits(),
-            EncryptionKey: match self.encryption_key {
+            bIsServer: val.is_server as i32,
+            ProductId: val.product_id.as_ptr() as *const i8,
+            SandboxId: val.sandbox_id.as_ptr() as *const i8,
+            DeploymentId: val.deployment_id.as_ptr() as *const i8,
+            ClientCredentials: val.client_credentials.into(),
+            Flags: val.flags.bits(),
+            EncryptionKey: match val.encryption_key {
                 Some(encryption_key) => encryption_key.as_ptr() as *const i8,
                 None => std::ptr::null(),
             },
-            OverrideCountryCode: match self.override_country_code {
+            OverrideCountryCode: match val.override_country_code {
                 Some(override_country_code) => override_country_code.as_ptr() as *const i8,
                 None => std::ptr::null(),
             },
-            OverrideLocaleCode: match self.override_locale_code {
+            OverrideLocaleCode: match val.override_locale_code {
                 Some(override_locale_code) => override_locale_code.as_ptr() as *const i8,
                 None => std::ptr::null(),
             },
-            CacheDirectory: match self.cache_directory {
+            CacheDirectory: match val.cache_directory {
                 Some(cache_directory) => cache_directory.as_path().to_str().unwrap().as_ptr() as *const i8,
                 None => std::ptr::null(),
             },
-            TickBudgetInMilliseconds: self.tick_budget_in_milliseconds,
-            RTCOptions: match self.rtc_options {
+            TickBudgetInMilliseconds: val.tick_budget_in_milliseconds,
+            RTCOptions: match val.rtc_options {
                 Some(rtc_options) => &EOS_Platform_RTCOptions {
                     ApiVersion: EOS_PLATFORM_RTCOPTIONS_API_LATEST as i32,
                     BackgroundMode: rtc_options.into(),
@@ -226,12 +237,12 @@ pub struct EosInitializeOptions {
     product_version: String,
 }
 
-impl Into<EOS_InitializeOptions> for EosInitializeOptions {
-    fn into(self) -> EOS_InitializeOptions {
+impl From<EosInitializeOptions> for EOS_InitializeOptions {
+    fn from(val: EosInitializeOptions) -> Self {
         EOS_InitializeOptions {
             ApiVersion: LATEST_API_VERSION,
-            ProductName: self.product_name.as_ptr() as *const i8,
-            ProductVersion: self.product_version.as_ptr() as *const i8,
+            ProductName: val.product_name.as_ptr() as *const i8,
+            ProductVersion: val.product_version.as_ptr() as *const i8,
             /// TODO does it make sense to use here a the allocator from the stdlib?
             AllocateMemoryFunction: None,
             ReallocateMemoryFunction: None,

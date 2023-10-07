@@ -11,10 +11,10 @@ pub struct EosIntegratedPlatformOptions {
     steam_options: Option<EosIntegratedPlatformSteamOptions>,
 }
 
-impl Into<EOS_IntegratedPlatform_Options> for EosIntegratedPlatformOptions {
-    fn into(self) -> EOS_IntegratedPlatform_Options {
+impl From<EosIntegratedPlatformOptions> for EOS_IntegratedPlatform_Options {
+    fn from(val: EosIntegratedPlatformOptions) -> Self {
         let steam_options: *const EOS_IntegratedPlatform_Steam_Options;
-        if let Some(optional_steam_options) = self.steam_options {
+        if let Some(optional_steam_options) = val.steam_options {
             steam_options =
                 &Into::<EOS_IntegratedPlatform_Steam_Options>::into(optional_steam_options)
                     as *const _;
@@ -23,8 +23,8 @@ impl Into<EOS_IntegratedPlatform_Options> for EosIntegratedPlatformOptions {
         };
         EOS_IntegratedPlatform_Options {
             ApiVersion: EOS_INTEGRATEDPLATFORM_STEAM_OPTIONS_API_LATEST as i32,
-            Type: self.platform_type.as_ptr() as *const i8,
-            Flags: self.flags.into(),
+            Type: val.platform_type.as_ptr() as *const i8,
+            Flags: val.flags.into(),
             InitOptions: &steam_options as *const _ as *const c_void,
         }
     }
@@ -73,9 +73,9 @@ pub enum EosIntegratedPlatformManagementFlag {
     ApplicationManagedIdentityLogin = 128,
 }
 
-impl Into<EOS_EIntegratedPlatformManagementFlags> for EosIntegratedPlatformManagementFlag {
-    fn into(self) -> EOS_EIntegratedPlatformManagementFlags {
-        match self {
+impl From<EosIntegratedPlatformManagementFlag> for EOS_EIntegratedPlatformManagementFlags {
+    fn from(val: EosIntegratedPlatformManagementFlag) -> Self {
+        match val {
             EosIntegratedPlatformManagementFlag::Disabled => {
                 EOS_EIntegratedPlatformManagementFlags::EOS_IPMF_Disabled
             }
@@ -121,16 +121,16 @@ pub struct EosIntegratedPlatformSteamOptions {
     pub steam_minor_version: u32,
 }
 
-impl Into<EOS_IntegratedPlatform_Steam_Options> for EosIntegratedPlatformSteamOptions {
-    fn into(self) -> EOS_IntegratedPlatform_Steam_Options {
+impl From<EosIntegratedPlatformSteamOptions> for EOS_IntegratedPlatform_Steam_Options {
+    fn from(val: EosIntegratedPlatformSteamOptions) -> Self {
         EOS_IntegratedPlatform_Steam_Options {
             ApiVersion: EOS_INTEGRATEDPLATFORM_STEAM_OPTIONS_API_LATEST as i32,
-            OverrideLibraryPath: self
+            OverrideLibraryPath: val
                 .override_library_path
                 .map(|s| s.as_ptr() as *const i8)
                 .unwrap_or(std::ptr::null()),
-            SteamMajorVersion: self.steam_major_version,
-            SteamMinorVersion: self.steam_minor_version,
+            SteamMajorVersion: val.steam_major_version,
+            SteamMinorVersion: val.steam_minor_version,
         }
     }
 }
